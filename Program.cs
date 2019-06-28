@@ -1,78 +1,73 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 
-public class Platformer
+public class Program
 {
-    private const int _stepsPerJump = 2;
-
-    private int _currentIndex;
-
-    private List<int> _remainingTiles;
-
-    public Platformer(int numberOfTiles, int position)
-    {
-        _currentIndex = position;
-        _remainingTiles = Enumerable.Range(0, numberOfTiles).ToList();
-    }
-
-    public void JumpLeft()
-    {
-        _remainingTiles.RemoveAt(_currentIndex);
-        _currentIndex -= 2;
-    }
-
-    public void JumpRight()
-    {
-        _remainingTiles.RemoveAt(_currentIndex);
-        _currentIndex += 1;
-    }
-
-    public int Position()
-    {
-        return _remainingTiles[_currentIndex];
-    }
-
     public static void Main(string[] args)
     {
-        Platformer platformer = new Platformer(6, 3);
-        Console.WriteLine("Current position:" + platformer.Position()); // should print 3
+        var p = new Program();
+
+        p.TestSmall((tiles, position) => new PlatformerFast(tiles, position));
+        p.TestSmall((tiles, position) => new PlatformerSlow(tiles, position));
+
+        p.TestLarge((tiles, position) => new PlatformerSlow(tiles, position));
+        p.TestLarge((tiles, position) => new PlatformerFast(tiles, position));
+    }
+
+    public void TestSmall(Func<int, int, Platformer> build)
+    {
+        Platformer platformer = build(6, 3);
+        Debug.Assert(platformer.Position() == 3);
 
         platformer.JumpLeft();
-        Console.WriteLine("Current position:" + platformer.Position()); // should print 1
+        Debug.Assert(platformer.Position() == 1);
 
         platformer.JumpRight();
-        Console.WriteLine("Current position:" + platformer.Position()); // should print 4
+        Debug.Assert(platformer.Position() == 4);
+    }
 
-        /**
-         * Test with large number of tiles for performance.
-         */
+    public void TestLarge(Func<int, int, Platformer> build)
+    {
+        Console.WriteLine("Running large test...");
 
-        const int tiles = 214748364;
+        const int tiles = int.MaxValue / 2;
         const int center = tiles / 2;
 
-        Platformer platformerToo = new Platformer(tiles, center + 3);
-        Console.WriteLine(platformerToo.Position() == center + 3);
+        Platformer platformer = build(tiles, center + 3);
+        Debug.Assert(platformer.Position() == center + 3);
 
-        platformerToo.JumpLeft();
-        Console.WriteLine(platformerToo.Position() == center + 1);
+        var watch = Stopwatch.StartNew();
 
-        platformerToo.JumpRight();
-        Console.WriteLine(platformerToo.Position() == center + 4);
+        platformer.JumpLeft();
+        Debug.Assert(platformer.Position() == center + 1);
 
-        platformerToo.JumpRight();
-        Console.WriteLine(platformerToo.Position() == center + 6);
+        platformer.JumpRight();
+        Debug.Assert(platformer.Position() == center + 4);
 
-        platformerToo.JumpRight();
-        Console.WriteLine(platformerToo.Position() == center + 8);
+        platformer.JumpRight();
+        Debug.Assert(platformer.Position() == center + 6);
 
-        platformerToo.JumpLeft();
-        Console.WriteLine(platformerToo.Position() == center + 5);
+        platformer.JumpRight();
+        Debug.Assert(platformer.Position() == center + 8);
 
-        platformerToo.JumpLeft();
-        Console.WriteLine(platformerToo.Position() == center + 0);
+        platformer.JumpLeft();
+        Debug.Assert(platformer.Position() == center + 5);
 
-        platformerToo.JumpRight();
-        Console.WriteLine(platformerToo.Position() == center + 7);
+        platformer.JumpLeft();
+        Debug.Assert(platformer.Position() == center + 0);
+
+        platformer.JumpRight();
+        Debug.Assert(platformer.Position() == center + 7);
+
+        platformer.JumpRight();
+        Debug.Assert(platformer.Position() == center + 10);
+
+        platformer.JumpRight();
+        Debug.Assert(platformer.Position() == center + 12);
+
+        platformer.JumpLeft();
+        Debug.Assert(platformer.Position() == center + 9);
+
+        Console.WriteLine($"{platformer.GetType().Name} completes in {watch.ElapsedMilliseconds} ms");
     }
 }
