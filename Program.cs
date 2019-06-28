@@ -1,50 +1,36 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Platformer
 {
     private const int _stepsPerJump = 2;
 
-    private int _currentPosition;
+    private int _currentIndex;
 
-    private bool[] _isTileGone;
+    private List<int> _remainingTiles;
 
     public Platformer(int numberOfTiles, int position)
     {
-        _currentPosition = position;
-        _isTileGone = new bool[numberOfTiles];
-    }
-
-    private void StepInDirectionAndSkipMissingTiles(Func<int> stepInDirection)
-    {
-        _isTileGone[_currentPosition] = true;
-
-        int steps = 0;
-        while (steps < _stepsPerJump)
-        {
-            do
-            {
-                stepInDirection();
-            }
-            while (_isTileGone[_currentPosition]);
-            steps++;
-        }
+        _currentIndex = position;
+        _remainingTiles = Enumerable.Range(0, numberOfTiles).ToList();
     }
 
     public void JumpLeft()
     {
-        Func<int> stepLeft = () => _currentPosition--;
-        StepInDirectionAndSkipMissingTiles(stepLeft);
+        _remainingTiles.RemoveAt(_currentIndex);
+        _currentIndex -= 2;
     }
 
     public void JumpRight()
     {
-        Func<int> stepRight = () => _currentPosition++;
-        StepInDirectionAndSkipMissingTiles(stepRight);
+        _remainingTiles.RemoveAt(_currentIndex);
+        _currentIndex += 1;
     }
 
     public int Position()
     {
-        return _currentPosition;
+        return _remainingTiles[_currentIndex];
     }
 
     public static void Main(string[] args)
@@ -57,5 +43,36 @@ public class Platformer
 
         platformer.JumpRight();
         Console.WriteLine("Current position:" + platformer.Position()); // should print 4
+
+        /**
+         * Test with large number of tiles for performance.
+         */
+
+        const int tiles = 214748364;
+        const int center = tiles / 2;
+
+        Platformer platformerToo = new Platformer(tiles, center + 3);
+        Console.WriteLine(platformerToo.Position() == center + 3);
+
+        platformerToo.JumpLeft();
+        Console.WriteLine(platformerToo.Position() == center + 1);
+
+        platformerToo.JumpRight();
+        Console.WriteLine(platformerToo.Position() == center + 4);
+
+        platformerToo.JumpRight();
+        Console.WriteLine(platformerToo.Position() == center + 6);
+
+        platformerToo.JumpRight();
+        Console.WriteLine(platformerToo.Position() == center + 8);
+
+        platformerToo.JumpLeft();
+        Console.WriteLine(platformerToo.Position() == center + 5);
+
+        platformerToo.JumpLeft();
+        Console.WriteLine(platformerToo.Position() == center + 0);
+
+        platformerToo.JumpRight();
+        Console.WriteLine(platformerToo.Position() == center + 7);
     }
 }
